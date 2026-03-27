@@ -86,7 +86,7 @@ export async function open(opts: OpenOptions): Promise<void> {
     '--no-default-browser-check',
     '--disable-background-networking',
     '--disable-sync',
-    ...(opts.headed ? [] : ['--headless=new', '--disable-gpu']),
+    // Always headed — the developer needs to see the browser
   ];
 
   const browserProc = spawn(execPath, browserArgs, {

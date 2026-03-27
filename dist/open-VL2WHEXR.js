@@ -296,8 +296,8 @@ async function open(opts) {
     "--no-first-run",
     "--no-default-browser-check",
     "--disable-background-networking",
-    "--disable-sync",
-    ...opts.headed ? [] : ["--headless=new", "--disable-gpu"]
+    "--disable-sync"
+    // Always headed — the developer needs to see the browser
   ];
   const browserProc = spawn2(execPath, browserArgs, {
     detached: true,

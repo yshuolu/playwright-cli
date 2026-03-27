@@ -194,7 +194,7 @@ async function main() {
         console.log(CMD_HELP.open);
         process.exit(1);
       }
-      const { open } = await import("./open-P5LIMSVP.js");
+      const { open } = await import("./open-VL2WHEXR.js");
       await open({
         url,
         cookies: flag("cookies"),
