@@ -8,7 +8,6 @@
   },
   "scripts": {
     "build": "tsup src/cli.ts --format esm --clean --target node20",
-    "prepare": "npm run build",
     "dev": "tsx src/cli.ts"
   },
   "dependencies": {
