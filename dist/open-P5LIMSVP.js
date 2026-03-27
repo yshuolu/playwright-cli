@@ -339,7 +339,6 @@ async function open(opts) {
   const finalUrl = page.url();
   console.log(JSON.stringify({ url: finalUrl, title }, null, 2));
   console.error(`Browser ready (pid: ${browserPid}, cdp: ${cdpUrl})`);
-  await browser.close();
 }
 export {
   open

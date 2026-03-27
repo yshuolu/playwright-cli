@@ -144,6 +144,7 @@ export async function open(opts: OpenOptions): Promise<void> {
   console.log(JSON.stringify({ url: finalUrl, title }, null, 2));
   console.error(`Browser ready (pid: ${browserPid}, cdp: ${cdpUrl})`);
 
-  // Disconnect Playwright without closing the browser
-  await browser.close();
+  // Disconnect Playwright without closing the browser.
+  // Do NOT call browser.close() — on a CDP connection it wipes the browser state.
+  // Just exit the process. The detached Chromium process keeps running with its state intact.
 }
