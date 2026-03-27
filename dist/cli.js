@@ -33,17 +33,26 @@ var MAIN_HELP = `playwright-cli \u2014 Browser automation with built-in auth sta
 
 Usage: playwright-cli <command> [options]
 
+Lifecycle:
+  1. open     \u2014 once per session. Launches browser. First run ~20s (extracts cookies),
+                subsequent runs ~2s (cached). Browser stays open in the background.
+  2. interact \u2014 navigate, click, fill, screenshot, snapshot, exec. Run as many as needed.
+                Each command connects to the open browser, acts, and exits instantly.
+  3. close    \u2014 once when done. Kills the browser.
+
+  Do NOT close and reopen between tests. Use navigate to go to a new page.
+
 Commands:
-  open <url>       Launch browser and navigate. Use --cookies to inject auth state.
-  navigate <url>   Navigate the current page to a new URL.
+  open <url>       Launch browser. --cookies injects auth state from Chrome.
+  navigate <url>   Go to a new URL (browser must be open).
   screenshot       Capture page as PNG.
-  snapshot         Capture page as ARIA accessibility tree (text).
+  snapshot         Capture ARIA accessibility tree (text).
   click <sel>      Click an element.
   fill <sel> <val> Fill an input field.
-  exec "<code>"    Execute arbitrary Playwright code.
+  exec "<code>"    Execute Playwright code (access to page, context, browser).
   console          Get browser console messages.
-  network          Get captured network requests.
-  close            Close the browser and clean up session.
+  network          Get network requests.
+  close            Kill browser and clean up session.
   profiles         List available Chrome profiles.
 
 Run playwright-cli <command> -h for command-specific help.`;
