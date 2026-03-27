@@ -8,6 +8,7 @@ import {
 
 // src/commands/open.ts
 import { chromium } from "playwright";
+import { spawn as spawn2 } from "child_process";
 
 // src/extract/browser-state.ts
 import { spawn } from "child_process";
@@ -237,40 +238,90 @@ async function extractBrowserState(browser, domain) {
 }
 
 // src/commands/open.ts
+import http2 from "http";
+function sleep2(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+function httpGet2(url) {
+  return new Promise((resolve, reject) => {
+    http2.get(url, (res) => {
+      let data = "";
+      res.on("data", (chunk) => data += chunk);
+      res.on("end", () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          reject(new Error(`Invalid JSON`));
+        }
+      });
+    }).on("error", reject);
+  });
+}
+function findChromiumExecutable() {
+  try {
+    const browserType = chromium;
+    return browserType.executablePath();
+  } catch {
+    return null;
+  }
+}
 async function open(opts) {
   if (hasSession()) {
-    console.error("Browser already open. Run `vibe-browser close` first, or use `navigate`.");
+    console.error("Browser already open. Run `playwright-cli close` first, or use `navigate`.");
     process.exit(1);
   }
   let state = null;
   if (opts.cookies) {
-    const browser2 = findBrowser(opts.profile);
-    if (!browser2) {
+    const devBrowser = findBrowser(opts.profile);
+    if (!devBrowser) {
       console.error("No Chromium browser found for cookie extraction.");
       console.error("Launching without cookies.");
     } else {
-      const profile = browser2.allProfiles.find((p) => p.name === browser2.profileName);
-      console.error(`Extracting from ${browser2.config.name} \u2014 "${profile?.displayName || browser2.profileName}"`);
+      const profile = devBrowser.allProfiles.find((p) => p.name === devBrowser.profileName);
+      console.error(`Extracting from ${devBrowser.config.name} \u2014 "${profile?.displayName || devBrowser.profileName}"`);
       const domain = new URL(opts.url).host;
-      state = await extractBrowserState(browser2, domain);
+      state = await extractBrowserState(devBrowser, domain);
       console.error(`Extracted ${state.cookies.length} cookies + ${Object.keys(state.localStorage).length} localStorage entries`);
     }
   }
   const cdpPort = 9300 + Math.floor(Math.random() * 700);
-  const browser = await chromium.launch({
-    headless: !opts.headed,
-    args: [`--remote-debugging-port=${cdpPort}`]
+  const execPath = findChromiumExecutable();
+  if (!execPath) {
+    console.error("Chromium not found. Run: npx playwright install chromium");
+    process.exit(1);
+  }
+  const browserArgs = [
+    `--remote-debugging-port=${cdpPort}`,
+    "--remote-debugging-address=127.0.0.1",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-background-networking",
+    "--disable-sync",
+    ...opts.headed ? [] : ["--headless=new", "--disable-gpu"]
+  ];
+  const browserProc = spawn2(execPath, browserArgs, {
+    detached: true,
+    stdio: "ignore"
   });
-  await new Promise((r) => setTimeout(r, 1e3));
+  browserProc.unref();
+  const browserPid = browserProc.pid;
   const cdpUrl = `http://127.0.0.1:${cdpPort}`;
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 }
-  });
+  for (let i = 0; i < 30; i++) {
+    await sleep2(200);
+    try {
+      const targets = await httpGet2(`${cdpUrl}/json/version`);
+      if (targets) break;
+    } catch {
+    }
+  }
+  const browser = await chromium.connectOverCDP(cdpUrl);
+  const context = browser.contexts()[0] || await browser.newContext({ viewport: { width: 1280, height: 720 } });
   if (state && state.cookies.length > 0) {
     await context.addCookies(state.cookies);
     console.error("Cookies injected.");
   }
-  const page = await context.newPage();
+  const pages = context.pages();
+  const page = pages[0] || await context.newPage();
   await page.goto(opts.url, { waitUntil: "networkidle" });
   if (state && Object.keys(state.localStorage).length > 0) {
     await page.evaluate((items) => {
@@ -281,16 +332,14 @@ async function open(opts) {
   }
   saveSession({
     wsEndpoint: cdpUrl,
-    pid: process.pid,
+    pid: browserPid,
     startedAt: (/* @__PURE__ */ new Date()).toISOString()
   });
   const title = await page.title();
-  const url = page.url();
-  console.log(JSON.stringify({ url, title }, null, 2));
-  console.error(`Browser open at ${cdpUrl}`);
-  console.error("Press Ctrl+C to close, or run `vibe-browser close` from another terminal.");
-  await new Promise(() => {
-  });
+  const finalUrl = page.url();
+  console.log(JSON.stringify({ url: finalUrl, title }, null, 2));
+  console.error(`Browser ready (pid: ${browserPid}, cdp: ${cdpUrl})`);
+  await browser.close();
 }
 export {
   open

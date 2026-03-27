@@ -1,10 +1,9 @@
 /**
  * close
  *
- * Close the browser and clean up the session.
+ * Kill the browser process and clean up the session.
  */
 
-import { chromium } from 'playwright';
 import { readSession, clearSession } from '../session.js';
 
 export async function close(): Promise<void> {
@@ -15,10 +14,9 @@ export async function close(): Promise<void> {
   }
 
   try {
-    const browser = await chromium.connectOverCDP(session.wsEndpoint);
-    await browser.close();
+    process.kill(session.pid, 'SIGTERM');
   } catch {
-    // Browser may already be dead — that's fine
+    // Process may already be dead
   }
 
   clearSession();

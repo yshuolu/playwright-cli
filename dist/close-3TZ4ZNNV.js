@@ -4,7 +4,6 @@ import {
 } from "./chunk-HHEN3XC6.js";
 
 // src/commands/close.ts
-import { chromium } from "playwright";
 async function close() {
   const session = readSession();
   if (!session) {
@@ -12,8 +11,7 @@ async function close() {
     return;
   }
   try {
-    const browser = await chromium.connectOverCDP(session.wsEndpoint);
-    await browser.close();
+    process.kill(session.pid, "SIGTERM");
   } catch {
   }
   clearSession();

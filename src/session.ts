@@ -73,7 +73,8 @@ export async function connect(): Promise<ConnectedSession> {
 
 export async function disconnect(browser: Browser): Promise<void> {
   try {
-    // disconnect without closing — browser stays alive
+    // Disconnect Playwright's CDP connection without killing the browser process
+    // browser.close() on a CDP-connected browser just disconnects
     await browser.close();
   } catch {}
 }

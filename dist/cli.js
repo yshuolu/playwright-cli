@@ -194,7 +194,7 @@ async function main() {
         console.log(CMD_HELP.open);
         process.exit(1);
       }
-      const { open } = await import("./open-BACEA5WM.js");
+      const { open } = await import("./open-AEWDFNZT.js");
       await open({
         url,
         cookies: flag("cookies"),
@@ -272,7 +272,7 @@ async function main() {
       break;
     }
     case "close": {
-      const { close } = await import("./close-S3SDBOUD.js");
+      const { close } = await import("./close-3TZ4ZNNV.js");
       await close();
       break;
     }
