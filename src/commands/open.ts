@@ -96,7 +96,7 @@ export async function open(opts: OpenOptions): Promise<void> {
     '--no-default-browser-check',
     '--disable-background-networking',
     '--disable-sync',
-    // Always headed — the developer needs to see the browser
+    '--start-maximized',
   ];
 
   const browserProc = spawn(execPath, browserArgs, {
@@ -119,7 +119,7 @@ export async function open(opts: OpenOptions): Promise<void> {
 
   // Connect via CDP using Playwright
   const browser = await chromium.connectOverCDP(cdpUrl);
-  const context = browser.contexts()[0] || await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const context = browser.contexts()[0] || await browser.newContext({ viewport: null });
 
   // Inject cookies before navigation
   if (state && state.cookies.length > 0) {

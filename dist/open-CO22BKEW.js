@@ -306,8 +306,8 @@ async function open(opts) {
     "--no-first-run",
     "--no-default-browser-check",
     "--disable-background-networking",
-    "--disable-sync"
-    // Always headed — the developer needs to see the browser
+    "--disable-sync",
+    "--start-maximized"
   ];
   const browserProc = spawn2(execPath, browserArgs, {
     detached: true,
@@ -325,7 +325,7 @@ async function open(opts) {
     }
   }
   const browser = await chromium.connectOverCDP(cdpUrl);
-  const context = browser.contexts()[0] || await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const context = browser.contexts()[0] || await browser.newContext({ viewport: null });
   if (state && state.cookies.length > 0) {
     await context.addCookies(state.cookies);
     console.error("Cookies injected.");

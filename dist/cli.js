@@ -203,7 +203,7 @@ async function main() {
         console.log(CMD_HELP.open);
         process.exit(1);
       }
-      const { open } = await import("./open-NRIEAK3Y.js");
+      const { open } = await import("./open-CO22BKEW.js");
       await open({
         url,
         cookies: flag("cookies"),
