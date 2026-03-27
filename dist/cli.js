@@ -65,7 +65,8 @@ Options:
   --cookies          Extract cookies + localStorage from Chrome and inject
                      into the browser before navigating. Uses the developer's
                      default Chrome profile.
-  --headed           Show the browser window (default: headless).
+  --headless         Run without a visible window. Only use when no display
+                     is available (CI, cloud agents). Default is headed.
   --profile <name>   Use a specific Chrome profile. Pass the directory name
                      (e.g. "Profile 1") or display name (e.g. "Work").
                      Run 'playwright-cli profiles' to see available profiles.
@@ -76,8 +77,8 @@ The browser stays alive after this command. Use 'navigate', 'screenshot',
 
 Examples:
   playwright-cli open http://localhost:3000 --cookies
-  playwright-cli open https://myapp.com --cookies --headed
-  playwright-cli open http://localhost:3000 --cookies --profile "Work"`,
+  playwright-cli open http://localhost:3000 --cookies --profile "Work"
+  playwright-cli open http://localhost:3000 --cookies --headless`,
   navigate: `playwright-cli navigate \u2014 Navigate to a new URL.
 
 Usage: playwright-cli navigate <url>
@@ -203,11 +204,11 @@ async function main() {
         console.log(CMD_HELP.open);
         process.exit(1);
       }
-      const { open } = await import("./open-CO22BKEW.js");
+      const { open } = await import("./open-Y2IYUZ4A.js");
       await open({
         url,
         cookies: flag("cookies"),
-        headed: flag("headed"),
+        headless: flag("headless"),
         profile: flagValue("profile")
       });
       break;

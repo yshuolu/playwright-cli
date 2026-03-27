@@ -18,7 +18,7 @@ import http from 'node:http';
 interface OpenOptions {
   url: string;
   cookies: boolean;
-  headed: boolean;
+  headless: boolean;
   profile?: string;
 }
 
@@ -96,7 +96,7 @@ export async function open(opts: OpenOptions): Promise<void> {
     '--no-default-browser-check',
     '--disable-background-networking',
     '--disable-sync',
-    '--start-maximized',
+    ...(opts.headless ? ['--headless=new', '--disable-gpu'] : ['--start-maximized']),
   ];
 
   const browserProc = spawn(execPath, browserArgs, {

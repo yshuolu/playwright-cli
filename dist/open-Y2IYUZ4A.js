@@ -307,7 +307,7 @@ async function open(opts) {
     "--no-default-browser-check",
     "--disable-background-networking",
     "--disable-sync",
-    "--start-maximized"
+    ...opts.headless ? ["--headless=new", "--disable-gpu"] : ["--start-maximized"]
   ];
   const browserProc = spawn2(execPath, browserArgs, {
     detached: true,
