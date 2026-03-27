@@ -3,8 +3,10 @@ import {
 } from "./chunk-SXDDRUBI.js";
 import {
   hasSession,
-  saveSession
-} from "./chunk-HHEN3XC6.js";
+  readStateCache,
+  saveSession,
+  saveStateCache
+} from "./chunk-YAW7MKUF.js";
 
 // src/commands/open.ts
 import { chromium } from "playwright";
@@ -272,16 +274,24 @@ async function open(opts) {
   }
   let state = null;
   if (opts.cookies) {
-    const devBrowser = findBrowser(opts.profile);
-    if (!devBrowser) {
-      console.error("No Chromium browser found for cookie extraction.");
-      console.error("Launching without cookies.");
+    const domain = new URL(opts.url).host;
+    const profileKey = opts.profile || "default";
+    const cached = readStateCache(domain, profileKey);
+    if (cached) {
+      state = { cookies: cached.cookies, localStorage: cached.localStorage };
+      console.error(`Reusing cached state (${state.cookies.length} cookies + ${Object.keys(state.localStorage).length} localStorage entries)`);
     } else {
-      const profile = devBrowser.allProfiles.find((p) => p.name === devBrowser.profileName);
-      console.error(`Extracting from ${devBrowser.config.name} \u2014 "${profile?.displayName || devBrowser.profileName}"`);
-      const domain = new URL(opts.url).host;
-      state = await extractBrowserState(devBrowser, domain);
-      console.error(`Extracted ${state.cookies.length} cookies + ${Object.keys(state.localStorage).length} localStorage entries`);
+      const devBrowser = findBrowser(opts.profile);
+      if (!devBrowser) {
+        console.error("No Chromium browser found for cookie extraction.");
+        console.error("Launching without cookies.");
+      } else {
+        const profile = devBrowser.allProfiles.find((p) => p.name === devBrowser.profileName);
+        console.error(`Extracting from ${devBrowser.config.name} \u2014 "${profile?.displayName || devBrowser.profileName}"`);
+        state = await extractBrowserState(devBrowser, domain);
+        console.error(`Extracted ${state.cookies.length} cookies + ${Object.keys(state.localStorage).length} localStorage entries`);
+        saveStateCache(state, domain, profileKey);
+      }
     }
   }
   const cdpPort = 9300 + Math.floor(Math.random() * 700);

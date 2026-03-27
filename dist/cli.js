@@ -194,7 +194,7 @@ async function main() {
         console.log(CMD_HELP.open);
         process.exit(1);
       }
-      const { open } = await import("./open-VL2WHEXR.js");
+      const { open } = await import("./open-NRIEAK3Y.js");
       await open({
         url,
         cookies: flag("cookies"),
@@ -209,12 +209,12 @@ async function main() {
         console.log(CMD_HELP.navigate);
         process.exit(1);
       }
-      const { navigate } = await import("./navigate-UGDOUSEE.js");
+      const { navigate } = await import("./navigate-QH6QJTPT.js");
       await navigate(url);
       break;
     }
     case "screenshot": {
-      const { screenshot } = await import("./screenshot-KZ4HQXDQ.js");
+      const { screenshot } = await import("./screenshot-AR3GABUG.js");
       await screenshot({
         mode: "screenshot",
         fullPage: flag("full-page"),
@@ -223,7 +223,7 @@ async function main() {
       break;
     }
     case "snapshot": {
-      const { screenshot } = await import("./screenshot-KZ4HQXDQ.js");
+      const { screenshot } = await import("./screenshot-AR3GABUG.js");
       await screenshot({ mode: "snapshot", fullPage: false });
       break;
     }
@@ -233,7 +233,7 @@ async function main() {
         console.log(CMD_HELP.click);
         process.exit(1);
       }
-      const { click } = await import("./click-LSAIFEXN.js");
+      const { click } = await import("./click-JIM34XZW.js");
       await click(selector);
       break;
     }
@@ -244,7 +244,7 @@ async function main() {
         console.log(CMD_HELP.fill);
         process.exit(1);
       }
-      const { fill } = await import("./fill-QA7U7L2F.js");
+      const { fill } = await import("./fill-IFDHQSRL.js");
       await fill(selector, value);
       break;
     }
@@ -254,17 +254,17 @@ async function main() {
         console.log(CMD_HELP.exec);
         process.exit(1);
       }
-      const { exec } = await import("./exec-FJBZ3A7U.js");
+      const { exec } = await import("./exec-XCHQR7XJ.js");
       await exec(code);
       break;
     }
     case "console": {
-      const { consoleLogs } = await import("./console-PUFMKDOW.js");
+      const { consoleLogs } = await import("./console-A7L3EKU4.js");
       await consoleLogs();
       break;
     }
     case "network": {
-      const { network } = await import("./network-3HTPFQ3P.js");
+      const { network } = await import("./network-KAS3BL56.js");
       await network({
         method: flagValue("method"),
         url: flagValue("url")
@@ -272,7 +272,7 @@ async function main() {
       break;
     }
     case "close": {
-      const { close } = await import("./close-3TZ4ZNNV.js");
+      const { close } = await import("./close-FGJE73W5.js");
       await close();
       break;
     }

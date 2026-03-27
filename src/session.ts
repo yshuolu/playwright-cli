@@ -51,6 +51,44 @@ export function clearSession(): void {
   try { unlinkSync(SESSION_FILE); } catch {}
 }
 
+// ---------------------------------------------------------------------------
+// State cache — reuse extracted cookies + localStorage between sessions
+// ---------------------------------------------------------------------------
+
+const STATE_CACHE_FILE = join(SESSION_DIR, 'state-cache.json');
+const STATE_CACHE_MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
+
+interface CachedState {
+  cookies: any[];
+  localStorage: Record<string, string>;
+  extractedAt: string;
+  domain: string;
+  profile: string;
+}
+
+export function readStateCache(domain: string, profile: string): CachedState | null {
+  if (!existsSync(STATE_CACHE_FILE)) return null;
+  try {
+    const cached: CachedState = JSON.parse(readFileSync(STATE_CACHE_FILE, 'utf-8'));
+    const age = Date.now() - new Date(cached.extractedAt).getTime();
+    if (age > STATE_CACHE_MAX_AGE_MS) return null;
+    if (cached.domain !== domain || cached.profile !== profile) return null;
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
+export function saveStateCache(state: { cookies: any[]; localStorage: Record<string, string> }, domain: string, profile: string): void {
+  mkdirSync(SESSION_DIR, { recursive: true });
+  const cached: CachedState = { ...state, extractedAt: new Date().toISOString(), domain, profile };
+  writeFileSync(STATE_CACHE_FILE, JSON.stringify(cached));
+}
+
+export function clearStateCache(): void {
+  try { unlinkSync(STATE_CACHE_FILE); } catch {}
+}
+
 export async function connect(): Promise<ConnectedSession> {
   const session = readSession();
   if (!session) {

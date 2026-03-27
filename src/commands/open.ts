@@ -10,7 +10,7 @@
 
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
-import { saveSession, hasSession } from '../session.js';
+import { saveSession, hasSession, readStateCache, saveStateCache } from '../session.js';
 import { findBrowser } from '../extract/profiles.js';
 import { extractBrowserState } from '../extract/browser-state.js';
 import http from 'node:http';
@@ -55,19 +55,29 @@ export async function open(opts: OpenOptions): Promise<void> {
     process.exit(1);
   }
 
-  // Extract browser state if --cookies
+  // Extract browser state if --cookies (reuse cache if fresh)
   let state: { cookies: any[]; localStorage: Record<string, string> } | null = null;
   if (opts.cookies) {
-    const devBrowser = findBrowser(opts.profile);
-    if (!devBrowser) {
-      console.error('No Chromium browser found for cookie extraction.');
-      console.error('Launching without cookies.');
+    const domain = new URL(opts.url).host;
+    const profileKey = opts.profile || 'default';
+
+    // Check cache first
+    const cached = readStateCache(domain, profileKey);
+    if (cached) {
+      state = { cookies: cached.cookies, localStorage: cached.localStorage };
+      console.error(`Reusing cached state (${state.cookies.length} cookies + ${Object.keys(state.localStorage).length} localStorage entries)`);
     } else {
-      const profile = devBrowser.allProfiles.find(p => p.name === devBrowser.profileName);
-      console.error(`Extracting from ${devBrowser.config.name} — "${profile?.displayName || devBrowser.profileName}"`);
-      const domain = new URL(opts.url).host;
-      state = await extractBrowserState(devBrowser, domain);
-      console.error(`Extracted ${state.cookies.length} cookies + ${Object.keys(state.localStorage).length} localStorage entries`);
+      const devBrowser = findBrowser(opts.profile);
+      if (!devBrowser) {
+        console.error('No Chromium browser found for cookie extraction.');
+        console.error('Launching without cookies.');
+      } else {
+        const profile = devBrowser.allProfiles.find(p => p.name === devBrowser.profileName);
+        console.error(`Extracting from ${devBrowser.config.name} — "${profile?.displayName || devBrowser.profileName}"`);
+        state = await extractBrowserState(devBrowser, domain);
+        console.error(`Extracted ${state.cookies.length} cookies + ${Object.keys(state.localStorage).length} localStorage entries`);
+        saveStateCache(state, domain, profileKey);
+      }
     }
   }
 

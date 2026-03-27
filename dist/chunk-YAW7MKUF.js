@@ -26,6 +26,25 @@ function clearSession() {
   } catch {
   }
 }
+var STATE_CACHE_FILE = join(SESSION_DIR, "state-cache.json");
+var STATE_CACHE_MAX_AGE_MS = 30 * 60 * 1e3;
+function readStateCache(domain, profile) {
+  if (!existsSync(STATE_CACHE_FILE)) return null;
+  try {
+    const cached = JSON.parse(readFileSync(STATE_CACHE_FILE, "utf-8"));
+    const age = Date.now() - new Date(cached.extractedAt).getTime();
+    if (age > STATE_CACHE_MAX_AGE_MS) return null;
+    if (cached.domain !== domain || cached.profile !== profile) return null;
+    return cached;
+  } catch {
+    return null;
+  }
+}
+function saveStateCache(state, domain, profile) {
+  mkdirSync(SESSION_DIR, { recursive: true });
+  const cached = { ...state, extractedAt: (/* @__PURE__ */ new Date()).toISOString(), domain, profile };
+  writeFileSync(STATE_CACHE_FILE, JSON.stringify(cached));
+}
 async function connect() {
   const session = readSession();
   if (!session) {
@@ -50,5 +69,7 @@ export {
   readSession,
   saveSession,
   clearSession,
+  readStateCache,
+  saveStateCache,
   connect
 };
