@@ -14,6 +14,9 @@ import { saveSession, hasSession, readStateCache, saveStateCache } from '../sess
 import { findBrowser } from '../extract/profiles.js';
 import { extractBrowserState } from '../extract/browser-state.js';
 import http from 'node:http';
+import { mkdtempSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 interface OpenOptions {
   url: string;
@@ -89,9 +92,13 @@ export async function open(opts: OpenOptions): Promise<void> {
     process.exit(1);
   }
 
+  // Isolated user-data-dir so Chrome doesn't delegate to an existing instance and exit.
+  const userDataDir = mkdtempSync(join(tmpdir(), 'pw-cli-'));
+
   const browserArgs = [
     `--remote-debugging-port=${cdpPort}`,
     '--remote-debugging-address=127.0.0.1',
+    `--user-data-dir=${userDataDir}`,
     '--no-first-run',
     '--no-default-browser-check',
     '--disable-background-networking',
@@ -162,14 +169,14 @@ export async function open(opts: OpenOptions): Promise<void> {
   // Navigate
   const pages = context.pages();
   const page = pages[0] || await context.newPage();
-  await page.goto(opts.url, { waitUntil: 'networkidle' });
+  await page.goto(opts.url, { waitUntil: 'domcontentloaded' });
 
   // Inject localStorage after navigation
   if (state && Object.keys(state.localStorage).length > 0) {
     await page.evaluate((items) => {
       for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
     }, state.localStorage);
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     console.error('localStorage injected.');
   }
 
