@@ -99,23 +99,55 @@ export async function open(opts: OpenOptions): Promise<void> {
     ...(opts.headless ? ['--headless=new', '--disable-gpu'] : ['--start-maximized']),
   ];
 
+  // Capture stderr temporarily so we can diagnose launch failures.
+  // Once CDP is ready we detach fully.
   const browserProc = spawn(execPath, browserArgs, {
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'ignore', 'pipe'],
   });
-  browserProc.unref();
+
+  let stderrChunks: string[] = [];
+  browserProc.stderr!.on('data', (chunk: Buffer) => {
+    stderrChunks.push(chunk.toString());
+  });
 
   const browserPid = browserProc.pid!;
   const cdpUrl = `http://127.0.0.1:${cdpPort}`;
 
-  // Wait for CDP to be ready
-  for (let i = 0; i < 30; i++) {
+  // Check if the process is still alive
+  function isAlive(): boolean {
+    try { process.kill(browserPid, 0); return true; } catch { return false; }
+  }
+
+  // Wait for CDP to be ready (up to 15 seconds)
+  let cdpReady = false;
+  for (let i = 0; i < 75; i++) {
     await sleep(200);
+    if (!isAlive()) {
+      const stderr = stderrChunks.join('').trim();
+      console.error(`Chromium process (pid ${browserPid}) died during startup.`);
+      if (stderr) console.error(`Chromium stderr:\n${stderr}`);
+      process.exit(1);
+    }
     try {
       const targets = await httpGet(`${cdpUrl}/json/version`);
-      if (targets) break;
+      if (targets) { cdpReady = true; break; }
     } catch {}
   }
+
+  if (!cdpReady) {
+    const stderr = stderrChunks.join('').trim();
+    console.error(`CDP endpoint never became ready at ${cdpUrl} (waited 15s).`);
+    if (stderr) console.error(`Chromium stderr:\n${stderr}`);
+    // Kill the hung process
+    try { process.kill(-browserPid); } catch {}
+    process.exit(1);
+  }
+
+  // CDP is up — stop capturing stderr and fully detach
+  browserProc.stderr!.removeAllListeners('data');
+  browserProc.stderr!.destroy();
+  browserProc.unref();
 
   // Connect via CDP using Playwright
   const browser = await chromium.connectOverCDP(cdpUrl);
